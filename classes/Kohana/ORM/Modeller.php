@@ -6,7 +6,7 @@
  * @author Sascha Galley
  *
  */
-class Kohana_Modeller_ORM extends ORM {
+class Kohana_ORM_Modeller extends ORM {
 
 	/**
 	 * Permission constants
@@ -21,12 +21,6 @@ class Kohana_Modeller_ORM extends ORM {
 	 * @var string
 	 */
 	protected $_icon_class = '';
-
-	/**
-	 * Editable columns
-	 * @var array
-	 */
-	protected $_i18n_columns = array();
 
 	/**
 	 * List columns
@@ -92,62 +86,6 @@ class Kohana_Modeller_ORM extends ORM {
 	public function humanized_plural()
 	{
 		return Inflector::plural($this->humanized_singular());
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Checks if object data is set.
-	 *
-	 * @param  string $column Column name
-	 * @return boolean
-	 */
-	public function __isset($column)
-	{
-		return (parent::__isset($column) OR in_array($column, $this->_i18n_columns));
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Handles getting of column
-	 * Override this method to add custom get behavior
-	 *
-	 * @param   string $column Column name
-	 * @throws Kohana_Exception
-	 * @return mixed
-	 */
-	public function get($column)
-	{
-		if (parent::__isset($column))
-		{
-			return parent::get($column);
-		}
-		elseif (in_array($column, $this->_i18n_columns))
-		{
-
-		}
-		else
-		{
-			throw new Kohana_Exception('The :property property does not exist in the :class class',
-				array(':property' => $column, ':class' => get_class($this)));
-		}
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Handles setting of columns
-	 * Override this method to add custom set behavior
-	 *
-	 * @param  string $column Column name
-	 * @param  mixed  $value  Column value
-	 * @throws Kohana_Exception
-	 * @return ORM
-	 */
-	public function set($column, $value)
-	{
-
 	}
 
 	// -------------------------------------------------------------------------

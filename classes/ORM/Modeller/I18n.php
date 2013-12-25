@@ -5,4 +5,4 @@
  * @author sg
  *
  */
-class Modeller_ORM extends Kohana_Modeller_ORM {}
+class ORM_Modeller_I18n extends Kohana_ORM_Modeller_I18n {}
