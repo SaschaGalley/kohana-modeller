@@ -26,7 +26,7 @@ class Kohana_ORM_Modeller extends ORM {
 	 * List columns
 	 * @var array
 	 */
-	protected $_list_columns = array();
+	protected $_show_columns = array();
 
 	/**
 	 * Editable columns
@@ -50,7 +50,7 @@ class Kohana_ORM_Modeller extends ORM {
 	 * Default order by, string or array
 	 * @var mixed
 	 */
-	protected $_sort_by = '';
+	protected $_sort_by = FALSE;
 
 	// -------------------------------------------------------------------------
 
@@ -107,9 +107,9 @@ class Kohana_ORM_Modeller extends ORM {
 	 *
 	 * @return array
 	 */
-	public function list_columns()
+	public function show_columns()
 	{
-		return $this->_list_columns;
+		return $this->_show_columns;
 	}
 
 	// -------------------------------------------------------------------------

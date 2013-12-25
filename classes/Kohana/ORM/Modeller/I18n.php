@@ -12,33 +12,25 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
      * Current language for I18n
      * @var string
      */
-    public $lang = 'en-us';
+    public $lang = 'en';
 
     /**
-     * Editable columns
+     * Current language id for I18n
+     * @var string
+     */
+    protected $_lang_id = FALSE;
+
+    /**
+     * I18n columns
      * @var array
      */
     protected $_i18n_columns = array();
 
-    // -------------------------------------------------------------------------
-
     /**
-     * Prepares the model database connection, determines the table name,
-     * and loads column information.
-     *
-     * @return void
+     * I18n data
+     * @var array
      */
-    protected function _initialize()
-    {
-        $this->lang = I18n::$lang;
-
-        foreach ($this->_i18n_columns as $column)
-        {
-            $this->_belongs_to[$column] = array('model' => 'I18n');
-        }
-
-        parent::_initialize();
-    }
+    protected $_i18n_data = array();
 
     // -------------------------------------------------------------------------
 
@@ -67,17 +59,10 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
     {
         if (in_array($column, $this->_i18n_columns))
         {
+            return ORM::factory('I18n', $this->_object[$column])->translations->where('language_id', '=', $this->lang())->find()->value;
+        }
 
-        }
-        elseif (parent::__isset($column))
-        {
-            return parent::get($column);
-        }
-        else
-        {
-            throw new Kohana_Exception('The :property property does not exist in the :class class',
-                array(':property' => $column, ':class' => get_class($this)));
-        }
+        return parent::get($column);
     }
 
     // -------------------------------------------------------------------------
@@ -93,7 +78,37 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
      */
     public function set($column, $value)
     {
+        parent::set($column, $value);
+    }
 
+    // -------------------------------------------------------------------------
+
+    /**
+     *
+     */
+    public function lang($value = FALSE)
+    {
+        if ($value === FALSE)
+        {
+            if ($this->_lang_id !== FALSE)
+            {
+                return $this->_lang_id;
+            }
+
+            $value = I18n::$lang;
+        }
+
+        $lang = ORM::factory('I18n_Language')->where(is_numeric($value) ? 'id' : 'iso', '=', $value)->find();
+
+        if ( ! $lang->loaded())
+        {
+            throw new Kohana_Exception('The langugae :langugae does not exist in the database',
+                array(':langugae' => $value));
+        }
+
+        $this->_lang_id = $lang->id;
+
+        return $this->_lang_id;
     }
 
     // -------------------------------------------------------------------------

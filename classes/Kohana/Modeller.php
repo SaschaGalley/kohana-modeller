@@ -42,7 +42,7 @@ class Kohana_Modeller {
 		$model = Inflector::underscore(ucwords(Inflector::humanize($model)));
 
 		// create model
-		$this->_model = Modeller_ORM::factory($model, $id);
+		$this->_model = ORM_Modeller::factory($model, $id);
 	}
 
 	// -------------------------------------------------------------------------
@@ -102,13 +102,16 @@ class Kohana_Modeller {
 		// get model's sort by
 		$sort_by = $this->_model->sort_by();
 
-		// make array
-		$sort_by = is_array($sort_by) ? $sort_by : array($sort_by);
-
-		foreach ($sort_by as $sort)
+		if ( ! empty($sort_by))
 		{
-			// order by
-			$this->_model->order_by($sort);
+			// make array
+			$sort_by = is_array($sort_by) ? $sort_by : array($sort_by);
+
+			foreach ($sort_by as $sort)
+			{
+				// order by
+				$this->_model->order_by($sort);
+			}
 		}
 	}
 

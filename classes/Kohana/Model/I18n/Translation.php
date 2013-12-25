@@ -8,7 +8,6 @@ class Kohana_Model_I18n_Translation extends ORM {
      */
     protected $_belongs_to = array(
         'language'      => array(),
-        'translation'   => array(),
     );
 
 

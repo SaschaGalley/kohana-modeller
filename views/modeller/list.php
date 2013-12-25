@@ -3,19 +3,19 @@
         <table class="table table-bordered table-hover table-striped table-condensed" data-provides="rowlink">
             <thead>
                 <tr>
-                    <th class="hidden datarow-provider"></th>
+                    <th class="datarow-provider"></th>
                     <?php foreach($list_headers as $header) :?>
 					    <th><?php echo $header; ?></th>
 					<?php endforeach; ?>
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($entity_list as $entity) :?>
+                <?php foreach ($entity_list as $entity) : ?>
                     <tr>
-                        <td class="hidden">
-                            <a href="<?php echo BASE_URL.$route; ?>edit/<?php echo $entity->id; ?>"></a>
+                        <td>
+                            <a href="<?php echo BASE_URL.$route; ?>/edit/<?php echo $entity->id; ?>">Edit</a>
                         </td>
-                        <?php foreach ($entity->show_columns() as $column) :?>
+                        <?php foreach ($entity->show_columns() as $column) : ?>
                         	<?php if (array_key_exists($column, $entity->belongs_to())) : ?>
                         		<td class="nolink">
 									<a href="<?php echo BASE_URL.'modeller/'.$entity->$column->object_name(); ?>/edit/<?php echo $entity->$column->pk(); ?>">

@@ -5,19 +5,13 @@
  * @author sg
  *
  */
-class Kohana_Controller_Modeller extends Controller {
+class Kohana_Controller_Modeller extends Controller_Template {
 
     /**
      * The modeller object
      * @var Modeller
      */
     protected $_modeller;
-
-    /**
-     * The modeller's model
-     * @var Modeller_ORM
-     */
-    protected $_model;
 
     // -------------------------------------------------------------------------
 
@@ -33,9 +27,6 @@ class Kohana_Controller_Modeller extends Controller {
 
         // set the modeller base route
         $this->_modeller->base_route('modeller');
-
-        // set the model
-        $this->_model = $this->_modeller->model();
     }
 
     // -------------------------------------------------------------------------
@@ -63,7 +54,7 @@ class Kohana_Controller_Modeller extends Controller {
             $view = $this->_modeller->render_list($this->request->query());
 
             // set header title
-            $this->template->header_title = $this->_model->humanized_plural();
+            $this->template->header_title = $this->_modeller->model()->humanized_plural();
 
             // set view inside dashboard
             $this->template->areas('main', $view);
@@ -87,12 +78,12 @@ class Kohana_Controller_Modeller extends Controller {
         $view = View::factory('modeller/form');
 
         // set form of model
-        $view->entity = $this->_model;
+        $view->entity = $this->_modeller->model();
 
         $view->route = $this->route();
 
         // set form of model
-        $view->form_view = View::factory( 'modeller/form', array('entity' => $this->_model));
+        $view->form_view = View::factory( 'modeller/form', array('entity' => $this->_modeller->model()));
 
         // set view inside main area
         $this->template->areas('main', $view);
@@ -113,7 +104,7 @@ class Kohana_Controller_Modeller extends Controller {
         }
 
         // load model with id
-        $this->model = ORM::factory($this->_model->object_name(), $this->request->param('id'));
+        $model = ORM::factory($this->_modeller->model()->object_name(), $this->request->param('id'));
 
         if ($this->request->method() == HTTP_Request::POST)
         {
@@ -125,10 +116,10 @@ class Kohana_Controller_Modeller extends Controller {
         $view = View::factory('modeller/form');
 
         // set form of model
-        $view->entity = $this->model;
+        $view->entity = $model;
 
         // set form of model
-        $view->form_view = View::factory('modeller/form', array('entity' => $this->model));
+        $view->form_view = View::factory('modeller/form', array('entity' => $model));
 
         // set view inside dashboard area
         $this->template->areas('main', $view);
@@ -137,13 +128,13 @@ class Kohana_Controller_Modeller extends Controller {
         // generate has many connections
         $connections = array();
 
-        foreach ($this->model->has_many() as $key => $values)
+        foreach ($model->has_many() as $key => $values)
         {
             // connection factory
             $connection = ORM::factory(Inflector::singular($values['model']));
 
             // load content (list) of connection
-            $content = Request::factory($this->route($connection))->query(array($values['foreign_key'] => $this->model->id))->execute()->body();
+            $content = Request::factory($this->route($connection))->query(array($values['foreign_key'] => $model->id))->execute()->body();
 
             // set has many connection
             $connections[$connection->object_name()] = array('title' => ucwords(Inflector::humanize($key)), 'content' => $content);
@@ -170,10 +161,10 @@ class Kohana_Controller_Modeller extends Controller {
         }
 
         // load model
-        $this->model = ORM::factory($this->_model->object_name(), $this->request->param('id'));
+        $model = ORM::factory($this->_modeller->model()->object_name(), $this->request->param('id'));
 
         // delete entity
-        $this->model->delete();
+        $model->delete();
 
         // make the default get request
         $this->_redirect_to_list();
@@ -231,7 +222,7 @@ class Kohana_Controller_Modeller extends Controller {
         if (is_null($model))
         {
             // set this model as default
-            $model = $this->_model;
+            $model = $this->_modeller->model();
         }
 
         $breadcrumbs = array();
@@ -254,7 +245,7 @@ class Kohana_Controller_Modeller extends Controller {
         }
 
         // add current route
-        $breadcrumbs[] = array('title' => $this->_model->humanized_plural(), 'route' => $this->route());
+        $breadcrumbs[] = array('title' => $this->_modeller->model()->humanized_plural(), 'route' => $this->route());
 
         // return breadcrumbs
         return $breadcrumbs;
@@ -273,7 +264,7 @@ class Kohana_Controller_Modeller extends Controller {
         if (is_null($model))
         {
             // set this model as default
-            $model = $this->_model;
+            $model = $this->_modeller->model();
         }
 
         $parts = explode('_', $model->object_name());
