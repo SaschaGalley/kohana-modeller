@@ -13,18 +13,18 @@
                 <?php foreach ($entity_list as $entity) : ?>
                     <tr>
                         <td>
-                            <a href="<?php echo BASE_URL.$route; ?>/edit/<?php echo $entity->id; ?>">Edit</a>
+                            <a href="<?php echo BASE_URL.$route; ?>edit/<?php echo $entity->id; ?>">Edit</a>
                         </td>
                         <?php foreach ($entity->show_columns() as $column) : ?>
                         	<?php if (array_key_exists($column, $entity->belongs_to())) : ?>
                         		<td class="nolink">
-									<a href="<?php echo BASE_URL.'modeller/'.$entity->$column->object_name(); ?>/edit/<?php echo $entity->$column->pk(); ?>">
+									<a href="<?php echo BASE_URL.$entity->$column->controller_name(); ?>edit/<?php echo $entity->$column->pk(); ?>">
 										<span class="label label-default"><?php echo $entity->$column; ?></span>
 									</a>
 								</td>
 							<?php elseif (array_key_exists($column, $entity->has_many())) : ?>
 								<td class="nolink">
-									<a href="<?php echo BASE_URL.'modeller/'.$entity->object_name().'/edit/'.$entity->id.'#pane'.Inflector::singular($column); ?>">
+									<a href="<?php echo BASE_URL.$entity->controller_name().'/edit/'.$entity->id.'#pane'.Inflector::singular($column); ?>">
 										<span class="badge badge-info"><?php echo $entity->$column->count_all()?></span>
 									</a>
 								</td>

@@ -7,6 +7,15 @@
  */
 class Kohana_Modeller {
 
+	const LIST_VIEW_TABLE = 'table';
+	const LIST_VIEW_LIST  = 'list';
+
+    /**
+     * Add the model name to the route
+     * @var string
+     */
+    protected $_route_add_model = TRUE;
+
 	// -------------------------------------------------------------------------
 
 	/**
@@ -14,7 +23,7 @@ class Kohana_Modeller {
 	 */
 	public static function factory($model, $id = NULL)
 	{
-		return new Kohana_Modeller($model, $id);
+		return new Modeller($model, $id);
 	}
 
 	// -------------------------------------------------------------------------
@@ -34,7 +43,10 @@ class Kohana_Modeller {
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Constructor
 	 *
+	 * @param string Model
+	 * @param int ID
 	 */
 	public function __construct($model, $id = NULL)
 	{
@@ -48,32 +60,11 @@ class Kohana_Modeller {
 	// -------------------------------------------------------------------------
 
 	/**
-	 *
+	 * Filter the list by request query
 	 */
-	public function render_list($query = array(), $search = null)
+	public function entities($query = array(), $search = FALSE)
 	{
-		// list view
-		$view = View::factory('modeller/list');
-
-		// filter list by get request
-		$this->_filter_list($query);
-
-		// order the list
-		$this->_sort_list();
-
-		// set list entities
-		$view->entity_list = is_null($search) ? $this->_model->find_all() : $this->_search($search);
-
-		// set the view base route
-		$view->route = $this->_base_route.'/'.str_replace("model_","",strtolower(get_class($this->_model)));
-
-		// set list headers
-		$view->list_headers = $this->_list_headers();
-
-		// add request query for referall magic stuff!
-		$view->query = $query;
-
-		return $view;
+		return $entities->find_all();
 	}
 
 	// -------------------------------------------------------------------------
@@ -81,7 +72,7 @@ class Kohana_Modeller {
 	/**
 	 * Filter the list by request query
 	 */
-	protected function _filter_list($query = array())
+	public function filter_list($query = array())
 	{
 		foreach ($this->_model->belongs_to() as $belongs_to)
 		{
@@ -90,6 +81,8 @@ class Kohana_Modeller {
 				$this->_model->where($belongs_to['foreign_key'], '=', $query[$belongs_to['foreign_key']]);
 			}
 		}
+
+		return $this;
 	}
 
 	// -------------------------------------------------------------------------
@@ -97,10 +90,10 @@ class Kohana_Modeller {
 	/**
 	 * Sort the list by model's sort by
 	 */
-	protected function _sort_list()
+	public function sort_list($order_by = NULL)
 	{
 		// get model's sort by
-		$sort_by = $this->_model->sort_by();
+		$sort_by = (is_null($order_by)) ? $this->_model->order_by_default() : $order_by;
 
 		if ( ! empty($sort_by))
 		{
@@ -113,6 +106,8 @@ class Kohana_Modeller {
 				$this->_model->order_by($sort);
 			}
 		}
+
+		return $this;
 	}
 
 	// -------------------------------------------------------------------------
@@ -135,25 +130,14 @@ class Kohana_Modeller {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Search for param
+	 * Getter for model
+	 *
+	 * @return Modeller_ORM
 	 */
-	public function search($query)
+	public function model()
 	{
-		if (sizeof($this->_model->searchable_columns()) > 0)
-		{
-			$this->_model->where_open();
-
-			foreach ($this->_model->searchable_columns() as $column)
-			{
-				$this->_model->or_where($column, 'LIKE', '%'.$query.'%');
-			}
-
-			return $this->_model->where_close()->find_all();
-		}
-		else
-		{
-			return false;
-		}
+		// act as getter
+		return $this->_model;
 	}
 
 	// -------------------------------------------------------------------------
@@ -174,19 +158,6 @@ class Kohana_Modeller {
 
 		// act as getter
 		return $this->_base_route;
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Getter for model
-	 *
-	 * @return Modeller_ORM
-	 */
-	public function model()
-	{
-		// act as getter
-		return $this->_model;
 	}
 
 	// -------------------------------------------------------------------------

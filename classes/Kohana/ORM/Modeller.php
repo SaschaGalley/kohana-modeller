@@ -17,12 +17,6 @@ class Kohana_ORM_Modeller extends ORM {
 	const PERMISSION_DELETE = 4;
 
 	/**
-	 * Icon (css class)
-	 * @var string
-	 */
-	protected $_icon_class = '';
-
-	/**
 	 * List columns
 	 * @var array
 	 */
@@ -50,18 +44,40 @@ class Kohana_ORM_Modeller extends ORM {
 	 * Default order by, string or array
 	 * @var mixed
 	 */
-	protected $_sort_by = FALSE;
+	protected $_order_by_default = FALSE;
+
+	/**
+	 * Enable filtering in list, string or array
+	 * @var mixed
+	 */
+	protected $_filter_by = FALSE;
+
+	/**
+	 * Icon (css class)
+	 * @var string
+	 */
+	protected $_icon_class = '';
 
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Icon css class
-	 *
-	 * @return string
+	 * Search functionality
 	 */
-	public function icon_class()
+	public function search($query = NULL)
 	{
-		return $this->_icon_class;
+		if ( ! empty($query) AND sizeof($this->searchable_columns()) > 0)
+		{
+			$this->where_open();
+
+			foreach ($this->searchable_columns() as $column)
+			{
+				$this->or_where($column, 'LIKE', '%'.$query.'%');
+			}
+
+			$this->where_close()->find_all();
+		}
+
+		return $this;
 	}
 
 	// -------------------------------------------------------------------------
@@ -86,6 +102,18 @@ class Kohana_ORM_Modeller extends ORM {
 	public function humanized_plural()
 	{
 		return Inflector::plural($this->humanized_singular());
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * The human readable plural object name
+	 *
+	 * @return string
+	 */
+	public function controller_name()
+	{
+		return implode('_', array_map(array('Inflector', 'plural'), explode('_', $this->object_name())));
 	}
 
 	// -------------------------------------------------------------------------
@@ -129,9 +157,19 @@ class Kohana_ORM_Modeller extends ORM {
 	/**
 	 *
 	 */
-	public function sort_by()
+	public function order_by_default()
 	{
-		return $this->_sort_by;
+		return $this->_order_by_default;
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 *
+	 */
+	public function filter_by()
+	{
+		return $this->_filter_by;
 	}
 
 	// -------------------------------------------------------------------------
@@ -156,6 +194,18 @@ class Kohana_ORM_Modeller extends ORM {
 	public function column_special_types()
 	{
 		return $this->_column_special_types;
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Icon css class
+	 *
+	 * @return string
+	 */
+	public function icon_class()
+	{
+		return $this->_icon_class;
 	}
 
 	// -------------------------------------------------------------------------

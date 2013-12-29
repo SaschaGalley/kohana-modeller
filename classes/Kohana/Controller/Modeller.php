@@ -13,6 +13,24 @@ class Kohana_Controller_Modeller extends Controller_Template {
      */
     protected $_modeller;
 
+    /**
+     * The model name
+     * @var string
+     */
+    protected $_model_name = '';
+
+    /**
+     * The form view
+     * @var string
+     */
+    protected $_form_view = 'modeller/form';
+
+    /**
+     * The form view
+     * @var string
+     */
+    protected $_list_view = 'modeller/list';
+
     // -------------------------------------------------------------------------
 
     /**
@@ -23,10 +41,10 @@ class Kohana_Controller_Modeller extends Controller_Template {
         parent::before();
 
         // create model by request params
-        $this->_modeller = Modeller::factory(Inflector::singular($this->request->param('model')), $this->request->param('id'));
+        $this->_modeller = Modeller::factory($this->_model_name, $this->request->param('id'));
 
         // set the modeller base route
-        $this->_modeller->base_route('modeller');
+        $this->_modeller->base_route(Request::current()->uri().URL::query());
     }
 
     // -------------------------------------------------------------------------
@@ -50,14 +68,25 @@ class Kohana_Controller_Modeller extends Controller_Template {
     {
         if ($this->request->method() == HTTP_Request::GET)
         {
-            // generate list view
-            $view = $this->_modeller->render_list($this->request->query());
+            // list view
+            $view = View::factory('modeller/list');
 
-            // set header title
-            $this->template->header_title = $this->_modeller->model()->humanized_plural();
+            // filter list by get request
+            $this->_modeller->filter_list($query)->sort_list()->search($search);
 
-            // set view inside dashboard
-            $this->template->areas('main', $view);
+            // set list entities
+            $view->entity_list = $this->_modeller->model()->find_all();
+
+            // set the view base route
+            $view->route = $this->_base_route.'/'.str_replace("model_", "", strtolower(get_class($this->_model)));
+
+            // set list headers
+            $view->list_headers = $this->_list_headers();
+
+            // add request query for referall magic stuff!
+            $view->query = $query;
+
+            return $view;
         }
     }
 
@@ -173,48 +202,6 @@ class Kohana_Controller_Modeller extends Controller_Template {
     // -------------------------------------------------------------------------
 
     /**
-     * Save the entity
-     */
-    protected function _save_entity(&$model)
-    {
-        // set values
-        $model->values($this->request->post());
-
-        // save entity
-        $model->save();
-
-        // make the default get request
-        $this->_redirect_to_list();
-    }
-
-    // -------------------------------------------------------------------------
-
-    /**
-     * Redirect to list page
-     */
-    protected function _redirect_to_list($message='')
-    {
-        $redirect = $this->route();
-
-        if ( ! is_null($this->request->query('redirect_to')))
-        {
-            // set redirect url from query
-            $redirect = $this->request->query('redirect_to');
-        }
-
-        if ( ! is_null($this->request->post('redirect_to')))
-        {
-            // set redirect url from post
-            $redirect = $this->request->post('redirect_to');
-        }
-
-        // redirect to url
-        $this->redirect(BASE_URL.$redirect);
-    }
-
-    // -------------------------------------------------------------------------
-
-    /**
      * Return belong to connections for breadcrumb
      */
     public function base_breadcrumbs($model = NULL)
@@ -275,7 +262,90 @@ class Kohana_Controller_Modeller extends Controller_Template {
         }
 
         // return route for model
-        return 'modeller'.'/'.implode('_', $parts);
+        return $this->_route_add_model ? $this->_modeller->base_route.'/'.implode('_', $parts) : $this->_modeller->base_route;
+    }
+
+    // -------------------------------------------------------------------------
+
+    /**
+     * Index action
+     * @see Seso_Controller_Page::action_index()
+     */
+    protected function _render_list($query = array(), $search = NULL)
+    {
+        // list view
+        $view = View::factory('modeller/list');
+
+        // filter list by get request
+        $this->_modeller->filter_list($query)->sort_list();
+
+        // set list entities
+        $view->entity_list = is_null($search) ? $this->_modeller->model->find_all() : $this->_search($search);
+
+        // set the view base route
+        $view->route = $this->_base_route.'/'.str_replace("model_", "", strtolower(get_class($this->_model)));
+
+        // set list headers
+        $view->list_headers = $this->_list_headers();
+
+        // add request query for referall magic stuff!
+        $view->query = $query;
+
+        // Return the view
+        return $view;
+    }
+
+    // -------------------------------------------------------------------------
+
+    /**
+     * Renders the form
+     * if connections is true, a tab for each "has many" connection will be rendered
+     */
+    protected function _render_form($connections = TRUE)
+    {
+
+    }
+
+    // -------------------------------------------------------------------------
+
+    /**
+     * Save the entity and redirect to list
+     */
+    protected function _save_entity(&$model)
+    {
+        // set values
+        $model->values($this->request->post());
+
+        // save entity
+        $model->save();
+
+        // make the default get request
+        $this->_redirect_to_list();
+    }
+
+    // -------------------------------------------------------------------------
+
+    /**
+     * Redirect to list page
+     */
+    protected function _redirect_to_list($message='')
+    {
+        $redirect = $this->route();
+
+        if ( ! is_null($this->request->query('redirect_to')))
+        {
+            // set redirect url from query
+            $redirect = $this->request->query('redirect_to');
+        }
+
+        if ( ! is_null($this->request->post('redirect_to')))
+        {
+            // set redirect url from post
+            $redirect = $this->request->post('redirect_to');
+        }
+
+        // redirect to url
+        $this->redirect(BASE_URL.$redirect);
     }
 
     // -------------------------------------------------------------------------

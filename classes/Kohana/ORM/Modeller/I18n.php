@@ -84,7 +84,9 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
     // -------------------------------------------------------------------------
 
     /**
+     * Getter and Setter for current language
      *
+     * @return int language id
      */
     public function lang($value = FALSE)
     {
