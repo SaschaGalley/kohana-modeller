@@ -8,28 +8,25 @@
 class Kohana_Controller_Modeller extends Controller_Template {
 
     /**
-     * The modeller object
-     * @var Modeller
+     *
+     * @var ORM_Modeller The model name
      */
-    protected $_modeller;
+    protected $_model = '';
 
     /**
-     * The model name
-     * @var string
-     */
-    protected $_model_name = '';
-
-    /**
-     * The form view
-     * @var string
+     * @var String The form view
      */
     protected $_form_view = 'modeller/form';
 
     /**
-     * The form view
-     * @var string
+     * @var String The form view
      */
     protected $_list_view = 'modeller/list';
+
+    /**
+     * @var String The base route for modeller
+     */
+    protected $_base_route = 'modeller';
 
     // -------------------------------------------------------------------------
 
@@ -40,11 +37,34 @@ class Kohana_Controller_Modeller extends Controller_Template {
     {
         parent::before();
 
-        // create model by request params
-        $this->_modeller = Modeller::factory($this->_model_name, $this->request->param('id'));
+        if ( ! is_null($this->request->param('model')))
+        {
+            // Create model from route param
+            $this->model($this->request->param('model'), $this->request->param('id'));
+        }
+        elseif (is_string($this->_model) AND ! empty($this->_model))
+        {
+            // Create model from property
+            $this->model($this->_model, $this->request->param('id'));
+        }
+        else
+        {
+            throw new Kohana_Exception('The modeller controller :class needs a model defined.',
+                array(':class' => get_class($this)));
+        }
 
-        // set the modeller base route
-        $this->_modeller->base_route(Request::current()->uri().URL::query());
+        // A get request may sort or filter the modeller entities
+        if ($this->request->method() == HTTP_Request::GET)
+        {
+            // Sort entities
+            $this->model()->sort($this->request->query('sort'));
+
+            // Filter entities
+            $this->model()->filter($this->request->query());
+        }
+
+        // Set the  base route
+        $this->route(Request::current()->uri().URL::query());
     }
 
     // -------------------------------------------------------------------------
@@ -62,32 +82,10 @@ class Kohana_Controller_Modeller extends Controller_Template {
 
     /**
      * Index action
-     * @see Seso_Controller_Page::action_index()
      */
     public function action_index()
     {
-        if ($this->request->method() == HTTP_Request::GET)
-        {
-            // list view
-            $view = View::factory('modeller/list');
-
-            // filter list by get request
-            $this->_modeller->filter_list($query)->sort_list()->search($search);
-
-            // set list entities
-            $view->entity_list = $this->_modeller->model()->find_all();
-
-            // set the view base route
-            $view->route = $this->_base_route.'/'.str_replace("model_", "", strtolower(get_class($this->_model)));
-
-            // set list headers
-            $view->list_headers = $this->_list_headers();
-
-            // add request query for referall magic stuff!
-            $view->query = $query;
-
-            return $view;
-        }
+        $this->template = $this->_render_list();
     }
 
     // -------------------------------------------------------------------------
@@ -97,25 +95,7 @@ class Kohana_Controller_Modeller extends Controller_Template {
      */
     public function action_add()
     {
-        if ($this->request->method() == HTTP_Request::POST)
-        {
-            // save entity on post request
-            $this->_save_entity($this->_model);
-        }
-
-        // form view
-        $view = View::factory('modeller/form');
-
-        // set form of model
-        $view->entity = $this->_modeller->model();
-
-        $view->route = $this->route();
-
-        // set form of model
-        $view->form_view = View::factory( 'modeller/form', array('entity' => $this->_modeller->model()));
-
-        // set view inside main area
-        $this->template->areas('main', $view);
+        $this->template = $this->_render_form();
     }
 
     // -------------------------------------------------------------------------
@@ -125,54 +105,26 @@ class Kohana_Controller_Modeller extends Controller_Template {
      */
     public function action_edit()
     {
-        if (is_null($this->request->param('id')))
+        if ( ! $this->model()->loaded())
         {
-            // edit request needs a id
-            throw new Exception('Invalid request. Param "id" expected.');
-            return;
+            throw new Kohana_Exception('Something went wrong with loading the model');
         }
 
-        // load model with id
-        $model = ORM::factory($this->_modeller->model()->object_name(), $this->request->param('id'));
+        $this->template = $this->_render_form();
+    }
 
+    // -------------------------------------------------------------------------
+
+    /**
+     * Save action
+     */
+    public function action_save()
+    {
         if ($this->request->method() == HTTP_Request::POST)
         {
             // save entity on post request
-            $this->_save_entity($this->model);
+            $this->_save_entity($this->model(), $this->request->post());
         }
-
-        // form view
-        $view = View::factory('modeller/form');
-
-        // set form of model
-        $view->entity = $model;
-
-        // set form of model
-        $view->form_view = View::factory('modeller/form', array('entity' => $model));
-
-        // set view inside dashboard area
-        $this->template->areas('main', $view);
-
-
-        // generate has many connections
-        $connections = array();
-
-        foreach ($model->has_many() as $key => $values)
-        {
-            // connection factory
-            $connection = ORM::factory(Inflector::singular($values['model']));
-
-            // load content (list) of connection
-            $content = Request::factory($this->route($connection))->query(array($values['foreign_key'] => $model->id))->execute()->body();
-
-            // set has many connection
-            $connections[$connection->object_name()] = array('title' => ucwords(Inflector::humanize($key)), 'content' => $content);
-        }
-
-        $view->connections = $connections;
-        $view->route = $this->route();
-
-        $this->template->areas('main')->connections =  $connections;
     }
 
     // -------------------------------------------------------------------------
@@ -202,9 +154,38 @@ class Kohana_Controller_Modeller extends Controller_Template {
     // -------------------------------------------------------------------------
 
     /**
+     * Getter and Setter for model
+     *
+     * @param $model    mixed   String or ORM_Modeller
+     * @param $id       int     Model ID
+     * @return ORM_Modeller
+     */
+    public function model($model = NULL, $id = NULL)
+    {
+        if (is_string($model))
+        {
+            // Make PSR-0 compatible model name
+            $name = Inflector::underscore(ucwords(Inflector::humanize($model)));
+
+            // Create model
+            $this->_model = ORM_Modeller::factory($name, $id);
+        }
+        elseif ($model instanceof ORM_Modeller)
+        {
+            // Set model
+            $this->_model = $model;
+        }
+
+        // Act as getter
+        return $this->_model;
+    }
+
+    // -------------------------------------------------------------------------
+
+    /**
      * Return belong to connections for breadcrumb
      */
-    public function base_breadcrumbs($model = NULL)
+    public function breadcrumbs($model = NULL)
     {
         if (is_null($model))
         {
@@ -246,23 +227,20 @@ class Kohana_Controller_Modeller extends Controller_Template {
      * @param  ORM  model
      * @return array
      */
-    public function route($model = NULL)
+    public function route($base_route = FALSE)
     {
-        if (is_null($model))
+        if ( ! empty($base_route))
         {
-            // set this model as default
-            $model = $this->_modeller->model();
+            $this->_base_route = $base_route;
         }
 
-        $parts = explode('_', $model->object_name());
-
-        foreach ($parts as &$part)
+        if ( ! is_null($this->request->param('model')))
         {
-            $part = Inflector::singular($part);
+            return $this->_base_route;
         }
 
-        // return route for model
-        return $this->_route_add_model ? $this->_modeller->base_route.'/'.implode('_', $parts) : $this->_modeller->base_route;
+        // Return route for model
+        return $this->_base_route.'/'.$this->request->param('model');
     }
 
     // -------------------------------------------------------------------------
@@ -274,22 +252,25 @@ class Kohana_Controller_Modeller extends Controller_Template {
     protected function _render_list($query = array(), $search = NULL)
     {
         // list view
-        $view = View::factory('modeller/list');
+        $view = View::factory($this->_list_view);
 
         // filter list by get request
-        $this->_modeller->filter_list($query)->sort_list();
+        $this->model()->filter($query)->sort()->search($search);
 
         // set list entities
-        $view->entity_list = is_null($search) ? $this->_modeller->model->find_all() : $this->_search($search);
+        $view->entity_list = $this->model()->find_all();
 
         // set the view base route
-        $view->route = $this->_base_route.'/'.str_replace("model_", "", strtolower(get_class($this->_model)));
+        $view->route = $this->route();
 
         // set list headers
         $view->list_headers = $this->_list_headers();
 
-        // add request query for referall magic stuff!
+        // Set request query
         $view->query = $query;
+
+        // Set search
+        $view->search = $search;
 
         // Return the view
         return $view;
@@ -301,9 +282,73 @@ class Kohana_Controller_Modeller extends Controller_Template {
      * Renders the form
      * if connections is true, a tab for each "has many" connection will be rendered
      */
-    protected function _render_form($connections = TRUE)
+    protected function _render_form($show_connections = TRUE)
     {
+        // form view
+        $view = View::factory($this->_form_view);
 
+        // set form of model
+        $view->entity = $this->model();
+
+        $view->route = $this->route();
+
+        $view->fields = array();
+
+        // Set form fields
+        foreach($this->model()->editable_columns() as $column)
+        {
+            $view->fields[$column] = $this->_render_form_field($column);
+        }
+
+        if ($show_connections AND $this->model()->loaded())
+        {
+            // generate has many connections
+            $connections = array();
+
+            foreach ($model->has_many() as $key => $values)
+            {
+                // connection factory
+                $connection = ORM::factory(Inflector::singular($values['model']));
+
+                // load content (list) of connection
+                $content = Request::factory($this->route($connection))->query(array($values['foreign_key'] => $model->id))->execute()->body();
+
+                // set has many connection
+                $connections[$connection->object_name()] = array('title' => ucwords(Inflector::humanize($key)), 'content' => $content);
+            }
+
+            $view->connections = $connections;
+            $view->route = $this->route();
+
+            $this->template->areas('main')->connections =  $connections;
+
+        }
+
+        return $view;
+    }
+
+    // -------------------------------------------------------------------------
+
+    /**
+     * Renders a single form field
+     */
+    protected function _render_form_field($column)
+    {
+        $column_type = $this->model()->column_type($column);
+
+        if ($column_type == ORM_Modeller::COLUMN_TYPE_HAS_MANY)
+        {
+            throw new Kohana_Exception('The "has_many" column ´:column´ cannot be editable.');
+        }
+
+        $view = View::factory('modeller/form/'.$column_type);
+
+        $view->name  = $column;
+        $view->value = $this->model()->$column;
+
+        $view->attributes = $this->model()->column_attributes($column);
+
+        return $view;
     }
 
     // -------------------------------------------------------------------------
@@ -311,13 +356,10 @@ class Kohana_Controller_Modeller extends Controller_Template {
     /**
      * Save the entity and redirect to list
      */
-    protected function _save_entity(&$model)
+    protected function _save_entity(&$model, $values)
     {
-        // set values
-        $model->values($this->request->post());
-
-        // save entity
-        $model->save();
+        // Set values and save
+        $model->values($values)->save();
 
         // make the default get request
         $this->_redirect_to_list();
@@ -346,6 +388,23 @@ class Kohana_Controller_Modeller extends Controller_Template {
 
         // redirect to url
         $this->redirect(BASE_URL.$redirect);
+    }
+
+    // -------------------------------------------------------------------------
+
+    /**
+     * List headers as array
+     */
+    protected function _list_headers()
+    {
+        $headers = array();
+
+        foreach ($this->_model->show_columns() as $column)
+        {
+            $headers[] = ucwords(Inflector::humanize($column));
+        }
+
+        return $headers;
     }
 
     // -------------------------------------------------------------------------

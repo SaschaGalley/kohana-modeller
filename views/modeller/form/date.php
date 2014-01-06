@@ -1,0 +1,1 @@
+<?php echo Form::input($name, $value, array_merge(array('class' => 'datepicker'), $attributes)); ?>

@@ -1,0 +1,1 @@
+<?php echo Form::checkbox($name, NULL, ($value === 1), $attributes);

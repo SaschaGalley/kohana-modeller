@@ -20,10 +20,10 @@
 					</tr>
 				</thead>
 				<tbody>
-				<?php foreach($entity->editable_columns() as $column): ?>
+				<?php foreach($fields as $name => $field): ?>
 					<tr>
-						<td><?php echo ucwords(Inflector::humanize($column)); ?></td>
-						<td><?php echo Modeller_Form::create($column, $entity); ?></td>
+						<td><?php echo ucwords(Inflector::humanize($name)); ?></td>
+						<td><?php echo $field; ?></td>
 					</tr>
 				<?php endforeach; ?>
 				<!-- TODO : WE HAVE TO POST THE PARENTS ID IF THIS FORM IS USED TO ADD A SUB-MODEL!! -->

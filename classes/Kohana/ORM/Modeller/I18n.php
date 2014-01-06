@@ -115,4 +115,16 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
 
     // -------------------------------------------------------------------------
 
+    /**
+     * Searchable columns
+     *
+     * @return array
+     */
+    public function i18n_columns()
+    {
+        return $this->_i18n_columns;
+    }
+
+    // -------------------------------------------------------------------------
+
 }

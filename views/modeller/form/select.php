@@ -1,0 +1,1 @@
+<?php echo Form::select($name, $attributes['options'], $value, array_merge( array(), $attributes)); ?>
