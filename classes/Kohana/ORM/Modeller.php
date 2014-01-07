@@ -66,9 +66,9 @@ class Kohana_ORM_Modeller extends ORM {
 	protected $_searchable_columns = array();
 
 	/**
-	 * @var Mixed Enable filtering in list, string or array
+	 *  @var Array Sortable columns
 	 */
-	protected $_filterable_columns = array();
+	protected $_sortable_columns = array();
 
 	/**
 	 * @var String Icon (css class)
@@ -314,16 +314,6 @@ class Kohana_ORM_Modeller extends ORM {
 	// -------------------------------------------------------------------------
 
 	/**
-	 *
-	 */
-	public function filterable_columns()
-	{
-		return $this->_filterable_columns;
-	}
-
-	// -------------------------------------------------------------------------
-
-	/**
 	 * Searchable columns
 	 *
 	 * @return array
@@ -331,6 +321,18 @@ class Kohana_ORM_Modeller extends ORM {
 	public function searchable_columns()
 	{
 		return $this->_searchable_columns;
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Sortable columns
+	 *
+	 * @return array
+	 */
+	public function sortable_columns()
+	{
+		return $this->_sortable_columns;
 	}
 
 	// -------------------------------------------------------------------------

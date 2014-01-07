@@ -18,7 +18,7 @@
                         <?php foreach ($entity->show_columns() as $column) : ?>
                         	<?php if (array_key_exists($column, $entity->belongs_to())) : ?>
                         		<td class="nolink">
-									<a href="<?php echo BASE_URL.$entity->$column->controller_name(); ?>edit/<?php echo $entity->$column->pk(); ?>">
+									<a href="<?php echo BASE_URL.$entity->$column->controller_name(); ?>/edit/<?php echo $entity->$column->pk(); ?>">
 										<span class="label label-default"><?php echo $entity->$column; ?></span>
 									</a>
 								</td>

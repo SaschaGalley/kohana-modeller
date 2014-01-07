@@ -9,6 +9,11 @@
 class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
 
     /**
+     * @var array Available languages
+     */
+    protected static $_available_languages = array();
+
+    /**
      * @var array I18n columns
      */
     protected $_i18n_columns = array();
@@ -17,11 +22,6 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
      * @var array I18n data
      */
     protected $_i18n_data = array();
-
-    /**
-     * @var array Available languages
-     */
-    protected static $_available_languages = array();
 
     // -------------------------------------------------------------------------
 
@@ -32,9 +32,9 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
     {
         if (empty(self::$_available_languages))
         {
-            $languages = Cache::instance()->get('available_languages', array());
+            self::$_available_languages = Cache::instance()->get('available_languages', array());
 
-            if (empty($languages))
+            if (empty(self::$_available_languages))
             {
                 $languages = ORM::factory('I18n_Language')->find_all()->as_array();
 
@@ -45,8 +45,6 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
 
                 Cache::instance()->set('available_languages', self::$_available_languages, 100);
             }
-
-            self::$_available_languages = $languages;
         }
 
         return self::$_available_languages;
@@ -152,12 +150,10 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
         if (($translation = $this->_column_with_lang($column)) !== FALSE)
         {
             $i18n = parent::get($translation['column']);
+            $i18n = empty($i18n) ? ORM::factory('I18n') : $i18n;
+            $i18n = ($i18n instanceof Model_I18n) ? $i18n : ORM::factory('I18n', $i18n);
 
-            if (empty($i18n))
-            {
-                $i18n = ORM::factory('I18n');
-                parent::set($translation['column'], $i18n);
-            }
+            parent::set($translation['column'], $i18n);
 
             $i18n->$translation['language'] = $value;
 
@@ -224,7 +220,7 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
 
                 // Since the I18n model won't return its primary key
                 // in __toString we need to do it manually here
-                $this->$i18n = $this->$i18n->id;
+                $this->$i18n = $this->$i18n->pk();
             }
         }
 
@@ -253,7 +249,7 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
         }
 
         // @TODO: add caching
-        $lang = Cache::instance()->get('language_id_for_'.$value, FALSE);
+        $lang = Cache::instance()->get('language_id_for_2'.$value, FALSE);
 
         if ($lang === FALSE)
         {
@@ -265,7 +261,7 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
                     array(':langugae' => $value));
             }
 
-            $lang = $lang->id;
+            $lang = $lang->pk();
 
             Cache::instance()->set('language_id_for_'.$value, $lang, 100);
         }
