@@ -1,8 +1,8 @@
 <?php
 
-$hasones = $this->_model->has_one();
+$hasones = $model->has_one();
 
-$fkModel = ORM::factory($hasones[$this->_column]['model'])->find_all();
+$fkModel = ORM::factory($hasones[$name]['model'])->find_all();
 
 $selection = array();
 foreach($fkModel as $m)
@@ -10,4 +10,4 @@ foreach($fkModel as $m)
     $selection[$m->id] = (string) $m;
 }
 
-return Form::select($hasones[$this->_column]['foreign_key'], $selection, $this->_model->{$this->_column}->id, $this->_attributes);
+return Form::select($hasones[$name]['foreign_key'], $selection, $value->id, $attributes);

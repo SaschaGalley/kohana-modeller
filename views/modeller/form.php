@@ -10,7 +10,7 @@
 	<div class="tab-content">
 		<div id="paneEdit" class="tab-pane active">
 		<!--  TODO IF WE EDIT A SUB-MODEL THE ACTION URL MUST BE ANOTHER ONE... REDIRECT TO THE CURRENT EDIT PAGE AGAIN...  -->
-		<form method="post" action="<?php echo BASE_URL.$route; ?>/<?php if ($entity->id > 0) :?>edit/<?php echo $entity->id; ?><?php else :?>add<?php endif; ?>" class="form-horizontal">
+		<form method="post" action="<?php echo BASE_URL.$route; ?>save/" class="form-horizontal">
 		    <input type="hidden" name="id" value="<?php echo $entity->id; ?>" />
 		    <?php echo (isset($parent)) ? '<input type="hidden" name="'.$parent['fk'].'" value="'.$parent['fk_id'].'" />' : '' ?>
 		    <table class="table table-condensed">

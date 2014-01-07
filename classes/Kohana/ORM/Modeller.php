@@ -26,7 +26,6 @@ class Kohana_ORM_Modeller extends ORM {
 	const COLUMN_TYPE_BINARY 		= 'binary';
 	const COLUMN_TYPE_DATE 			= 'date';
 	const COLUMN_TYPE_FLOAT 		= 'float';
-	const COLUMN_TYPE_I18N			= 'i18n';
 	const COLUMN_TYPE_IMAGE 		= 'image';
 	const COLUMN_TYPE_INT 			= 'int';
 	const COLUMN_TYPE_LONGTEXT 		= 'longtext';
@@ -216,11 +215,6 @@ class Kohana_ORM_Modeller extends ORM {
 	 */
 	public function column_type($column)
 	{
-		if (array_key_exists($column, $this->has_one()))
-		{
-			return ORM_Modeller::COLUMN_TYPE_HAS_ONE;
-		}
-
 		if (array_key_exists($column, $this->has_many()))
 		{
 			return ORM_Modeller::COLUMN_TYPE_HAS_MANY;
@@ -231,9 +225,14 @@ class Kohana_ORM_Modeller extends ORM {
 			return ORM_Modeller::COLUMN_TYPE_BELONGS_TO;
 		}
 
-		if ($this instanceof ORM_Modeller_I18n AND array_key_exists($column, $this->i18n_columns()))
+		if ($this instanceof ORM_Modeller_I18n AND (in_array($column, $this->i18n_columns()) OR $this->_column_with_lang($column)))
 		{
-			return ORM_Modeller::COLUMN_TYPE_I18N;
+			return ORM_Modeller::COLUMN_TYPE_VARCHAR;
+		}
+
+		if (array_key_exists($column, $this->has_one()))
+		{
+			return ORM_Modeller::COLUMN_TYPE_HAS_ONE;
 		}
 
 		if (array_key_exists($column, $this->_column_types))
@@ -262,6 +261,8 @@ class Kohana_ORM_Modeller extends ORM {
 			default:
 				return ORM_Modeller::COLUMN_TYPE_VARCHAR;
         }
+
+        return FALSE;
 	}
 
 	// -------------------------------------------------------------------------

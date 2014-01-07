@@ -62,9 +62,6 @@ class Kohana_Controller_Modeller extends Controller_Template {
             // Filter entities
             $this->model()->filter($this->request->query());
         }
-
-        // Set the  base route
-        $this->route(Request::current()->uri().URL::query());
     }
 
     // -------------------------------------------------------------------------
@@ -123,7 +120,7 @@ class Kohana_Controller_Modeller extends Controller_Template {
         if ($this->request->method() == HTTP_Request::POST)
         {
             // save entity on post request
-            $this->_save_entity($this->model(), $this->request->post());
+            $this->_save_entity($this->_model, $this->request->post());
         }
     }
 
@@ -320,8 +317,7 @@ class Kohana_Controller_Modeller extends Controller_Template {
             $view->connections = $connections;
             $view->route = $this->route();
 
-            $this->template->areas('main')->connections =  $connections;
-
+            $view->connections = $connections;
         }
 
         return $view;
@@ -345,6 +341,7 @@ class Kohana_Controller_Modeller extends Controller_Template {
 
         $view->name  = $column;
         $view->value = $this->model()->$column;
+        $view->model = $this->model();
 
         $view->attributes = $this->model()->column_attributes($column);
 
@@ -370,7 +367,7 @@ class Kohana_Controller_Modeller extends Controller_Template {
     /**
      * Redirect to list page
      */
-    protected function _redirect_to_list($message='')
+    protected function _redirect_to_list($message = '')
     {
         $redirect = $this->route();
 
