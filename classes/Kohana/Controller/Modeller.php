@@ -201,7 +201,7 @@ class Kohana_Controller_Modeller extends Controller_Template {
     {
         $column_type = $this->model()->column_type($column);
 
-        $view = View::factory('modeller/form/'.$column_type);
+        $view = View::factory('modeller/form/fields/'.$column_type);
 
         $view->name  = $column;
         $view->value = $this->model()->$column;

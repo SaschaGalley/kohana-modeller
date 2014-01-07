@@ -290,17 +290,25 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
      */
     public function editable_columns()
     {
-        $editable_columns = array_diff(parent::editable_columns(), $this->i18n_columns());
+        // Get all editable columns
+        $editable_columns = parent::editable_columns();
 
-        foreach ($this->i18n_columns() as $i18n)
+        // Get editable i18n columns
+        $editablie_i18n = array_intersect(parent::editable_columns(), $this->i18n_columns());
+
+        foreach ($editablie_i18n as $i18n)
         {
-            foreach (self::available_languages() as $lang)
-            {
-                $editable_columns[] = $i18n.'_'.$lang;
-            }
+            // Create array of column_lang strings from available languages
+            $additional = array_map(function($lang) use ($i18n){
+                return $i18n.'_'.$lang;
+            }, self::available_languages());
+
+            // Replace editable column with array of possible languages
+            $editable_columns[array_search($i18n, $editable_columns)] = $additional;
         }
 
-        return $editable_columns;
+        // Return flattened array
+        return Arr::flatten($editable_columns);
     }
 
     // -------------------------------------------------------------------------

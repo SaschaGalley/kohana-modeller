@@ -1,3 +1,3 @@
 <?php foreach ($value->find_all() as $value) : ?>
-    <?php var_dump($value); ?>
+    <?php echo $value; ?>
 <?php endforeach; ?>

@@ -15,9 +15,6 @@
 		    <?php echo (isset($parent)) ? '<input type="hidden" name="'.$parent['fk'].'" value="'.$parent['fk_id'].'" />' : '' ?>
 		    <table class="table table-condensed">
 				<thead>
-					<tr>
-						<th>Field</th><th>Value</th>
-					</tr>
 				</thead>
 				<tbody>
 				<?php foreach($fields as $name => $field): ?>
