@@ -11,6 +11,30 @@ class Kohana_Model_I18n_Language extends ORM_Modeller_I18n {
     );
 
     /**
+     * Default order by, string or array
+     * @var mixed
+     */
+    protected $_order_by_default = 'name';
+
+    /**
+     * List columns
+     * @var array
+     */
+    protected $_show_columns = array('name', 'iso');
+
+    /**
+     * Editable columns
+     * @var array
+     */
+    protected $_editable_columns = array('name', 'iso');
+
+    /**
+     * Searchable columns
+     * @var array
+     */
+    protected $_searchable_columns = array('name', 'iso');
+
+    /**
      * I18n columns
      * @var array
      */

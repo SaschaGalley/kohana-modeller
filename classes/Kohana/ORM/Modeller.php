@@ -167,7 +167,7 @@ class Kohana_ORM_Modeller extends ORM {
 	 */
 	public function humanized_singular()
 	{
-		return ucwords(Inflector::humanize($this->object_name()));
+		return ucwords(Inflector::humanize(Inflector::singular($this->object_name())));
 	}
 
 	// -------------------------------------------------------------------------

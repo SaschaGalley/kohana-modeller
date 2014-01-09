@@ -40,7 +40,7 @@ class Kohana_Controller_Modeller extends Controller_Template {
         if ( ! is_null($this->request->param('model')))
         {
             // Create model from route param
-            $this->model($this->request->param('model'));
+            $this->model(Inflector::underscore(ucwords(Inflector::singular(Inflector::humanize($this->request->param('model'))))));
         }
         elseif (is_string($this->_model) AND ! empty($this->_model))
         {
@@ -349,9 +349,10 @@ class Kohana_Controller_Modeller extends Controller_Template {
     {
         $base_route = empty($base_route) ? $this->_base_route : $base_route;
         $base_route = $base_route instanceof ORM_Modeller ? $base_route->controller_name() : $base_route;
+        $base_route .= ($model = $this->request->param('model', FALSE)) ? '/'.$model.'/' : '/';
 
         // Return route for model
-        return $base_route.'/'.$this->request->param('model');
+        return $base_route;
     }
 
     // -------------------------------------------------------------------------
