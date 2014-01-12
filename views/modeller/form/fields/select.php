@@ -1,1 +1,1 @@
-<?php echo Form::select($name, $attributes['options'], $value, array_merge( array(), $attributes)); ?>
+<?php echo Form::select($field->name(), $field->attributes()['options'], $field->value(), array_merge(array(), $field->attributes())); ?>

@@ -5,13 +5,13 @@
  * @author sg
  *
  */
-class Kohana_Controller_Modeller extends Controller_Template {
+class Kohana_Modeller {
 
     /**
      *
      * @var ORM_Modeller The model name
      */
-    protected $_modeller = NULL;
+    protected $_model = '';
 
     /**
      * @var String The form view
@@ -26,108 +26,117 @@ class Kohana_Controller_Modeller extends Controller_Template {
     // -------------------------------------------------------------------------
 
     /**
-     * Before processing
+     * Modeller factory
      */
-    public function before()
+    public static function factory($model, $id = NULL)
     {
-        parent::before();
+        return new Modeller($model, $id);
+    }
 
-        $model = Arr::first_nonempty(array(
-            $this->request->param('model'),
-            $this->_modeller,
-        ));
+    // -------------------------------------------------------------------------
 
-        $this->_modeller = Modeller::factory($model);
+    /**
+     *
+     */
+    public function __construct($model, $id = NULL)
+    {
+        // make PSR-0 compatible model name
+        $model = ucwords(implode('_', array_map(array('Inflector', 'singular'), explode('_', $model))));
 
-        $id = Arr::first_nonempty(array(
-            $this->request->param('id'),
-            $this->request->post($this->_modeller->model()->primary_key()),
-        ));
-
-        $this->_modeller->model($model, $id);
+        // create model
+        $this->_model = ORM_Modeller::factory($model, $id);
     }
 
     // -------------------------------------------------------------------------
 
     /**
      * Index action
+     * @see Seso_Controller_Page::action_index()
      */
-    public function action_index()
+    public function render_list(Request $request)
     {
-        if ($this->request->method() !== HTTP_Request::GET)
-        {
-            throw new Kohana_Exception('Wrong request method. GET is required for index action.');
-        }
+        // list view
+        $view = View::factory($this->_list_view);
 
-        $this->template = $this->_modeller->render_list($this->request);
+        // filter list by get request
+        $this->model()->filter($request->query())->sort($request->query('sort'))->search($request->query('search'));
+
+        // set list entities
+        $view->entities = $this->model()->find_all();
+
+        // set the view base route
+        $view->route = $this->route();
+
+        // set list headers
+        $view->list_headers = $this->_list_headers();
+
+        // Set request query
+        $view->filters = $request->query();
+
+        // Set search
+        $view->search = $request->query('search');
+
+        // Set sort
+        $view->sort = $request->query('sort');
+
+        $view->model = $this->model();
+
+        // Return the view
+        return $view;
     }
 
     // -------------------------------------------------------------------------
 
     /**
-     * Add action
+     * Renders the form
+     * if connections is true, a tab for each "has many" connection will be rendered
      */
-    public function action_add()
+    public function render_form(Request $request, $show_connections = TRUE)
     {
-        $this->template = $this->_modeller->render_form($this->request);
+        // form view
+        $view = View::factory($this->_form_view);
+
+        // set form of model
+        $view->entity = $this->model();
+
+        $view->route = $this->route();
+
+        $view->form = Modeller_Form::factory($this->model());
+
+        if ($show_connections AND $this->model()->loaded())
+        {
+            // generate has many connections
+            $connections = array();
+
+            foreach ($this->model()->show_connections(TRUE) as $key => $values)
+            {
+                // connection factory
+                $connection = ORM::factory($values['model']);
+
+                $route = str_replace(BASE_URL, '', $this->route($connection));
+
+                // load content (list) of connection
+                $content = Request::factory($route)->query(array($values['foreign_key'] => $this->model()->pk()))->execute()->body();
+
+                // set has many connection
+                $connections[$connection->object_name()] = array('title' => ucwords(Inflector::humanize($key)), 'content' => $content);
+            }
+
+            $view->connections = $connections;
+        }
+
+        return $view;
     }
 
     // -------------------------------------------------------------------------
 
     /**
-     * Edit action
+     * Save the entity and redirect to list
      */
-    public function action_edit()
+    public function save($values)
     {
-        if ( ! $this->model()->loaded())
-        {
-            throw new Kohana_Exception('Something went wrong with loading the model');
-        }
-
-        $this->template = $this->_modeller->render_form($this->request);
-    }
-
-    // -------------------------------------------------------------------------
-
-    /**
-     * Save action
-     */
-    public function action_save()
-    {
-        if ($this->request->method() == HTTP_Request::POST)
-        {
-            // save entity on post request
-            $this->_modeller->save($this->request->post());
-
-            // make the default get request
-            $this->_redirect_to_list();
-        }
-    }
-
-    // -------------------------------------------------------------------------
-
-    /**
-     * Delete action
-     */
-    public function action_delete()
-    {
-        $id = $this->request->param($this->model()->primary_key());
-
-        if (is_null($id))
-        {
-            // request needs id
-            throw new Exception('Invalid request. Param "id" expected.');
-            return;
-        }
-
-        // load model
-        $model = ORM::factory($this->_modeller->model()->object_name(), $id);
-
-        // delete entity
-        $model->delete();
-
-        // make the default get request
-        $this->_redirect_to_list();
+        // Set values and save
+        $this->model()->values($values)->save();
     }
 
     // -------------------------------------------------------------------------
@@ -141,33 +150,27 @@ class Kohana_Controller_Modeller extends Controller_Template {
      */
     public function model($model = NULL, $id = NULL)
     {
+        if (is_string($model))
+        {
+            // Make PSR-0 compatible model name
+            $name = ucwords(implode('_', array_map(array('Inflector', 'singular'), explode('_', $model))));
+
+            // Create model
+            $this->_model = ORM::factory($name, $id);
+        }
+        elseif ($model instanceof ORM_Modeller)
+        {
+            if ( ! $model->loaded() AND ! is_null($id))
+            {
+                $model = ORM::factory($model->object_name(), $id);
+            }
+
+            // Set model
+            $this->_model = $model;
+        }
+
         // Act as getter
-        return $this->_modeller->model($model, $id);
-    }
-
-    // -------------------------------------------------------------------------
-
-    /**
-     * Redirect to list page
-     */
-    protected function _redirect_to_list($message = '')
-    {
-        $redirect = $this->route();
-
-        if ( ! is_null($this->request->query('redirect_to')))
-        {
-            // set redirect url from query
-            $redirect = $this->request->query('redirect_to');
-        }
-
-        if ( ! is_null($this->request->post('redirect_to')))
-        {
-            // set redirect url from post
-            $redirect = $this->request->post('redirect_to');
-        }
-
-        // redirect to url
-        $this->redirect($redirect);
+        return $this->_model;
     }
 
     // -------------------------------------------------------------------------
@@ -198,7 +201,7 @@ class Kohana_Controller_Modeller extends Controller_Template {
         if (is_null($model))
         {
             // set this model as default
-            $model = $this->_modeller->model();
+            $model = $this->model();
         }
 
         $breadcrumbs = array();
@@ -207,6 +210,8 @@ class Kohana_Controller_Modeller extends Controller_Template {
         {
             // get first connection in belongs to
             $belongs_to = key($model->belongs_to());
+
+            var_dump($model->belongs_to());
 
             if (isset($model->$belongs_to))
             {
@@ -218,13 +223,14 @@ class Kohana_Controller_Modeller extends Controller_Template {
                     // add model detail to beginning of base modeller breadcrumbs if loaded
                     array_unshift($breadcrumbs, array('title' => $model, 'route' => $this->route($model).'/edit/'.$model->pk()));
                 }
+
                 // add model overview to beginning of base modeller breadcrumbs
                 array_unshift($breadcrumbs, array('title' => $model->humanized_plural(), 'route' => $this->route($model)));
             }
         }
 
         // add current route
-        $breadcrumbs[] = array('title' => $this->_modeller->model()->humanized_plural(), 'route' => $this->route());
+        $breadcrumbs[] = array('title' => $this->model()->humanized_plural(), 'route' => $this->route());
 
         // return breadcrumbs
         return $breadcrumbs;

@@ -1,8 +1,8 @@
 <?php
 
-$belongings = $model->belongs_to();
+$belongings = $field->model()->belongs_to();
 
-$fkModel = ORM::factory($belongings[$name]['model'])->find_all();
+$fkModel = ORM::factory($belongings[$field->name()]['model'])->find_all();
 
 $selection = array();
 foreach($fkModel as $m)
@@ -10,4 +10,4 @@ foreach($fkModel as $m)
     $selection[$m->id] = (string) $m;
 }
 
-echo Form::select($belongings[$name]['foreign_key'], $selection, $value->id, $attributes);
+echo Form::select($belongings[$field->name()]['foreign_key'], $selection, $field->value()->id, $field->attributes());

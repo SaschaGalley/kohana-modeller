@@ -1,1 +1,1 @@
-<?php echo Form::input($name, $value, array_merge(array('class' => 'datepicker'), $attributes)); ?>
+<?php echo Form::input($field->name(), $field->value(), array_merge(array('class' => 'datepicker'), $field->attributes())); ?>

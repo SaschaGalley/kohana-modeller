@@ -9,15 +9,6 @@ class Kohana_Model_I18n extends ORM_Modeller_I18n {
     protected $_table_name = 'I18n';
 
     /**
-     * "Belongs to" connections
-     * @var array
-     */
-    protected $_belongs_to = array(
-        'language'      => array('model' => 'I18n_Language'),
-        'translation'   => array('model' => 'I18n_Translation'),
-    );
-
-    /**
      * "Has many" connections
      * @var array
      */
@@ -33,7 +24,7 @@ class Kohana_Model_I18n extends ORM_Modeller_I18n {
 
     public function __toString()
     {
-        $translation = $this->translations->where('language_id', '=', $this->lang(I18n::$lang))->find();
+        $translation = $this->translations->where('language_id', '=', Modeller_I18n::language()->pk())->find();
         return (empty($translation->value)) ? '' : $translation->value;
     }
 
@@ -47,7 +38,7 @@ class Kohana_Model_I18n extends ORM_Modeller_I18n {
      */
     public function __isset($column)
     {
-        return (parent::__isset($column) OR in_array($column, self::available_languages()));
+        return (parent::__isset($column) OR in_array($column, Modeller_I18n::available_languages()));
     }
 
     // -------------------------------------------------------------------------
@@ -59,15 +50,15 @@ class Kohana_Model_I18n extends ORM_Modeller_I18n {
             return $this->_translations[$key];
         }
 
-        if (isset($this->_object_name) AND in_array($key, self::available_languages()))
+        if (isset($this->_object_name) AND in_array($key, Modeller_I18n::available_languages()))
         {
-            $translation = $this->translations->where('language_id', '=', $this->lang($key))->find();
+            $translation = $this->translations->where('language_id', '=', Modeller_I18n::language($key)->pk())->find();
 
             if ( ! $translation->loaded())
             {
                 $translation = ORM::factory('I18n_Translation')->values(array(
                     'i18n_id'     => $this->id,
-                    'language_id' => $this->lang($key),
+                    'language_id' => Modeller_I18n::language($key),
                 ));
             }
 
@@ -83,7 +74,7 @@ class Kohana_Model_I18n extends ORM_Modeller_I18n {
 
     public function set($key, $value)
     {
-        if (in_array($key, self::available_languages()))
+        if (in_array($key, Modeller_I18n::available_languages()))
         {
             $this->get($key)->value = $value;
 

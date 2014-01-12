@@ -1,1 +1,1 @@
-<?php echo Form::checkbox($name, NULL, ($value === 1), $attributes);
+<?php echo Form::checkbox($field->name(), NULL, ($field->value() === 1), $field->attributes());

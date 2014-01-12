@@ -9,11 +9,6 @@
 class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
 
     /**
-     * @var array Available languages
-     */
-    protected static $_available_languages = array();
-
-    /**
      * @var array I18n columns
      */
     protected $_i18n_columns = array();
@@ -22,33 +17,6 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
      * @var array I18n data
      */
     protected $_i18n_data = array();
-
-    // -------------------------------------------------------------------------
-
-    /**
-     *
-     */
-    public static function available_languages()
-    {
-        if (empty(self::$_available_languages))
-        {
-            self::$_available_languages = Cache::instance()->get('available_languages', array());
-
-            if (empty(self::$_available_languages))
-            {
-                $languages = ORM::factory('I18n_Language')->find_all()->as_array();
-
-                foreach ($languages as $language)
-                {
-                    self::$_available_languages[$language->id] = $language->iso;
-                }
-
-                Cache::instance()->set('available_languages', self::$_available_languages, 100);
-            }
-        }
-
-        return self::$_available_languages;
-    }
 
     // -------------------------------------------------------------------------
 
@@ -73,14 +41,14 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
     /**
      *
      */
-    protected function _column_with_lang($column)
+    public function split_i18n_column($column)
     {
         if (($seperator = strrpos($column, '_')) !== FALSE)
         {
             $check_column   = substr($column, 0, strrpos($column, '_'));
             $check_language = substr($column, strrpos($column, '_') + 1);
 
-            if (in_array($check_language, self::available_languages()) AND in_array($check_column, $this->i18n_columns()))
+            if (in_array($check_language, Modeller_I18n::available_languages()) AND in_array($check_column, $this->i18n_columns()))
             {
                 return array('column' => $check_column, 'language' => $check_language);
             }
@@ -107,7 +75,7 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
             return parent::get($column);
         }
 
-        if (($translation = $this->_column_with_lang($column)) !== FALSE)
+        if (($translation = $this->split_i18n_column($column)) !== FALSE)
         {
             $i18n = parent::get($translation['column']);
             $i18n = empty($i18n) ? ORM::factory('I18n') : $i18n;
@@ -147,7 +115,7 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
             return parent::set($column, $value);
         }
 
-        if (($translation = $this->_column_with_lang($column)) !== FALSE)
+        if (($translation = $this->split_i18n_column($column)) !== FALSE)
         {
             $i18n = parent::get($translation['column']);
             $i18n = empty($i18n) ? ORM::factory('I18n') : $i18n;
@@ -182,7 +150,7 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
 
             foreach ($this->i18n_columns() as $i18n)
             {
-                foreach (self::available_languages() as $lang)
+                foreach (Modeller_I18n::available_languages() as $lang)
                 {
                     $expected[] = $i18n.'_'.$lang;
                 }
@@ -237,48 +205,13 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
     // -------------------------------------------------------------------------
 
     /**
-     * Getter and Setter for current language
-     *
-     * @return int language id
-     */
-    public function lang($value = FALSE)
-    {
-        if ($value === FALSE)
-        {
-            $value = I18n::$lang;
-        }
-
-        // @TODO: add caching
-        $lang = Cache::instance()->get('language_id_for_2'.$value, FALSE);
-
-        if ($lang === FALSE)
-        {
-            $lang = ORM::factory('I18n_Language')->where(is_numeric($value) ? 'id' : 'iso', '=', $value)->find();
-
-            if ( ! $lang->loaded())
-            {
-                throw new Kohana_Exception('The langugae :langugae does not exist in the database',
-                    array(':langugae' => $value));
-            }
-
-            $lang = $lang->pk();
-
-            Cache::instance()->set('language_id_for_'.$value, $lang, 100);
-        }
-
-        return $lang;
-    }
-
-    // -------------------------------------------------------------------------
-
-    /**
      * Searchable columns
      *
      * @return array
      */
-    public function i18n_columns()
+    public function i18n_columns($full_info = FALSE)
     {
-        return $this->_i18n_columns;
+        return $this->_get_info($this->_i18n_columns, $this->list_columns(), $full_info, FALSE);
     }
 
     // -------------------------------------------------------------------------
@@ -288,7 +221,7 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
      *
      * @return array
      */
-    public function editable_columns()
+    public function editable_columns($full_info = FALSE)
     {
         // Get all editable columns
         $editable_columns = parent::editable_columns();
@@ -301,14 +234,14 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
             // Create array of column_lang strings from available languages
             $additional = array_map(function($lang) use ($i18n){
                 return $i18n.'_'.$lang;
-            }, self::available_languages());
+            }, Modeller_I18n::available_languages());
 
             // Replace editable column with array of possible languages
             $editable_columns[array_search($i18n, $editable_columns)] = $additional;
         }
 
         // Return flattened array
-        return Arr::flatten($editable_columns);
+        return $this->_get_info(Arr::flatten($editable_columns), $this->list_columns(), $full_info, FALSE);
     }
 
     // -------------------------------------------------------------------------

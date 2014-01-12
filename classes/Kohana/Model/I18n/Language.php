@@ -7,7 +7,7 @@ class Kohana_Model_I18n_Language extends ORM_Modeller_I18n {
      * @var array
      */
     protected $_has_many = array(
-        'translations'   => array('model' => 'I18n_Translation'),
+        'translations'   => array('model' => 'I18n_Translation', 'foreign_key' => 'language_id'),
     );
 
     /**
@@ -39,6 +39,13 @@ class Kohana_Model_I18n_Language extends ORM_Modeller_I18n {
      * @var array
      */
     protected $_i18n_columns = array('name');
+
+    // -------------------------------------------------------------------------
+
+    public function __toString()
+    {
+        return (string) $this->name;
+    }
 
     // -------------------------------------------------------------------------
 

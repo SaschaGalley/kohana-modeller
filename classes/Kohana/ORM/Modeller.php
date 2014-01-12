@@ -56,6 +56,11 @@ class Kohana_ORM_Modeller extends ORM {
 	protected $_show_columns = array();
 
 	/**
+	 * @var Array The has many connections that should be shown as connection tab
+	 */
+	protected $_show_connections = array();
+
+	/**
 	 * @var Array Editable columns
 	 */
 	protected $_editable_columns = array();
@@ -74,6 +79,11 @@ class Kohana_ORM_Modeller extends ORM {
 	 * @var String Icon (css class)
 	 */
 	protected $_icon_class = '';
+
+	/**
+	 * @var String The base route to its modeller controller
+	 */
+	protected $_controller_route = 'modeller';
 
 	// -------------------------------------------------------------------------
 
@@ -107,7 +117,12 @@ class Kohana_ORM_Modeller extends ORM {
 	 */
 	public function filter($query = array(), $value = FALSE)
 	{
-		if ( ! is_array($query) AND $value !== FALSE)
+		if (empty($query))
+		{
+			return $this;
+		}
+
+		if (is_string($query) AND $value !== FALSE)
 		{
 			$query = array($query => $value);
 		}
@@ -189,9 +204,17 @@ class Kohana_ORM_Modeller extends ORM {
 	 *
 	 * @return string
 	 */
-	public function controller_name()
+	public function controller_route()
 	{
-		return implode('_', array_map(array('Inflector', 'plural'), explode('_', $this->object_name())));
+		$route = Route::get($this->_controller_route);
+
+		$controller_name = implode('_', array_map(array('Inflector', 'plural'), explode('_', $this->object_name())));
+		$model_name = implode('_', array_map(array('Inflector', 'singular'), explode('_', $this->object_name())));
+
+		return Route::url(Route::name($route), array(
+			'controller' => $this->_controller_route == 'modeller' ? 'modeller' : $controller_name,
+			'model' => $model_name,
+		));
 	}
 
 	// -------------------------------------------------------------------------
@@ -225,7 +248,7 @@ class Kohana_ORM_Modeller extends ORM {
 			return ORM_Modeller::COLUMN_TYPE_BELONGS_TO;
 		}
 
-		if ($this instanceof ORM_Modeller_I18n AND (in_array($column, $this->i18n_columns()) OR $this->_column_with_lang($column)))
+		if ($this instanceof ORM_Modeller_I18n AND (in_array($column, $this->i18n_columns()) OR $this->split_i18n_column($column)))
 		{
 			return ORM_Modeller::COLUMN_TYPE_VARCHAR;
 		}
@@ -294,9 +317,51 @@ class Kohana_ORM_Modeller extends ORM {
 	 *
 	 * @return array
 	 */
-	public function show_columns()
+	protected function _get_info($array = FALSE, array $info, $full_info = FALSE, $info_as_default = TRUE)
 	{
-		return $this->_show_columns;
+		if ($array === FALSE)
+		{
+			return array();
+		}
+
+		if (empty($array) AND $info_as_default === TRUE)
+		{
+			$array = array_keys($info);
+		}
+
+		if ($full_info === TRUE)
+		{
+			$array = array_intersect_key($info, array_flip($array));
+		}
+
+		return $array;
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Columns to show in list view
+	 *
+	 * @return array
+	 */
+	public function show_columns($full_info = FALSE)
+	{
+		$all_columns = $this->list_columns();
+		unset($all_columns[$this->_primary_key]);
+
+		return $this->_get_info($this->_show_columns, $all_columns, $full_info);
+	}
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Columns to show in list view
+	 *
+	 * @return array
+	 */
+	public function show_connections($full_info = FALSE)
+	{
+		return $this->_get_info($this->_show_connections, $this->has_many(), $full_info);
 	}
 
 	// -------------------------------------------------------------------------
@@ -306,9 +371,12 @@ class Kohana_ORM_Modeller extends ORM {
 	 *
 	 * @return array
 	 */
-	public function editable_columns()
+	public function editable_columns($full_info = FALSE)
 	{
-		return $this->_editable_columns;
+		$all_columns = $this->list_columns();
+		unset($all_columns[$this->_primary_key]);
+
+		return $this->_get_info($this->_editable_columns, $all_columns, $full_info);
 	}
 
 	// -------------------------------------------------------------------------
@@ -318,9 +386,9 @@ class Kohana_ORM_Modeller extends ORM {
 	 *
 	 * @return array
 	 */
-	public function searchable_columns()
+	public function searchable_columns($full_info = FALSE)
 	{
-		return $this->_searchable_columns;
+		return $this->_get_info($this->_searchable_columns, $this->list_columns(), $full_info);
 	}
 
 	// -------------------------------------------------------------------------
@@ -330,9 +398,9 @@ class Kohana_ORM_Modeller extends ORM {
 	 *
 	 * @return array
 	 */
-	public function sortable_columns()
+	public function sortable_columns($full_info = FALSE)
 	{
-		return $this->_sortable_columns;
+		return $this->_get_info($this->_sortable_columns, $this->list_columns(), $full_info);
 	}
 
 	// -------------------------------------------------------------------------
