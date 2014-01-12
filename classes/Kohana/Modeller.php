@@ -81,6 +81,9 @@ class Kohana_Modeller {
 
         $view->model = $this->model();
 
+        $view->header = TRUE;
+        $view->buttons = TRUE;
+
         // Return the view
         return $view;
     }
@@ -111,15 +114,19 @@ class Kohana_Modeller {
             foreach ($this->model()->show_connections(TRUE) as $key => $values)
             {
                 // connection factory
-                $connection = ORM::factory($values['model']);
+                $connection = Modeller::factory($values['model']);
 
-                $route = str_replace(BASE_URL, '', $this->route($connection));
+                //$route = str_replace(BASE_URL, '', $this->route($connection));
+
+                $request = Request::factory()->query($values['foreign_key'], $this->model()->pk());
 
                 // load content (list) of connection
-                $content = Request::factory($route)->query(array($values['foreign_key'] => $this->model()->pk()))->execute()->body();
+                $content = $connection->render_list($request);
+
+                $content->header = FALSE;
 
                 // set has many connection
-                $connections[$connection->object_name()] = array('title' => ucwords(Inflector::humanize($key)), 'content' => $content);
+                $connections[$connection->model()->object_name()] = array('title' => ucwords(Inflector::humanize($key)), 'content' => $content);
             }
 
             $view->connections = $connections;

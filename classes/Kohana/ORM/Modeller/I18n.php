@@ -39,6 +39,38 @@ class Kohana_ORM_Modeller_I18n extends ORM_Modeller {
     // -------------------------------------------------------------------------
 
     /**
+     * Search functionality
+     *
+     * @param  String search for
+     * @return ORM_Modeller this
+     */
+    public function search($query = NULL)
+    {
+        if ( ! empty($query) AND sizeof($this->searchable_columns()) > 0)
+        {
+            $this->where_open();
+
+            foreach ($this->searchable_columns() as $column)
+            {
+                if (in_array($column, $this->i18n_columns()))
+                {
+                    $this->or_where(DB::expr('`'.$this->object_name().'`.`'.$column.'`'), 'IN', DB::expr('(SELECT i18n_id FROM I18n_Translations WHERE i18n_id=`'.$this->object_name().'`.`'.$column.'` AND value like "%'.$query.'%")'));
+                }
+                else
+                {
+                    $this->or_where($column, 'LIKE', '%'.$query.'%');
+                }
+            }
+
+            $this->where_close();
+        }
+
+        return $this;
+    }
+
+    // -------------------------------------------------------------------------
+
+    /**
      *
      */
     public function split_i18n_column($column)

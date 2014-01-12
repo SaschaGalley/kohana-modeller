@@ -1,6 +1,8 @@
+<?php if ($header) : ?>
 <h1>
     <?php echo __($model->humanized_plural()); ?>
 </h1>
+<?php endif; ?>
 
 <table class="table table-bordered table-hover table-striped dataTable">
     <thead>
@@ -42,6 +44,7 @@
     </tbody>
 </table>
 
+<?php if ($buttons) : ?>
 <div class="controls">
     <div class="row-fluid">
 		<a href="<?php echo $model->controller_route(); ?>/add<?php echo URL::query($filters); ?>" class="btn btn-primary"><i class="fa fa-plus"></i> <?php echo __('Add'); ?></a>
@@ -49,3 +52,4 @@
 		<a href="javascript: window.print();" class="btn btn-default"><i class="fa fa-print"></i> <?php echo __('Print'); ?></a>
     </div>
 </div>
+<?php endif; ?>

@@ -58,7 +58,7 @@ class Kohana_Model_I18n extends ORM_Modeller_I18n {
             {
                 $translation = ORM::factory('I18n_Translation')->values(array(
                     'i18n_id'     => $this->id,
-                    'language_id' => Modeller_I18n::language($key),
+                    'language_id' => Modeller_I18n::language($key)->pk(),
                 ));
             }
 

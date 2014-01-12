@@ -70,9 +70,10 @@
 			<?php foreach($connections as $key => $connection) :?>
 				<li<?php if ($first) echo ' class="active"'; ?>>
 					<a href="#pane<?php echo $key; ?>" data-toggle="tab">
-						<?php echo $connection['title'] ?> <span class="badge">1</span>
+						<?php echo $connection['title'] ?> <span class="badge"><?php echo count($connection['content']->entities); ?></span>
 					</a>
 				</li>
+				<?php $first = FALSE; ?>
 			<?php endforeach; ?>
 		</ul>
 		<div class="tab-content">
