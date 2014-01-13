@@ -1,0 +1,6 @@
+{
+    "name": "kohana/modeller",
+    "type": "kohana-module",
+    "url": "https://github.com/SaschaGalley/kohana-modeller",
+    "version": "3.3.1",
+}
