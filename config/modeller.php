@@ -3,13 +3,14 @@
 return array(
 
 /* -----------------------------------------------------------------------------
- *  Default modeller config
+ *  Default Modeller config
  * -----------------------------------------------------------------------------
  */
 	'default' => array
 	(
-		// route to modeller, will be used for route and directory
-		'route' => 'modeller', // .(/<model>(/<action>(/<id>)))
+		// Route to modeller, will be used for route and directory
+        // If set to FALSE, no route will be added
+		'route' => 'modeller/<model>(/<action>(/<id>))',
 	),
 
 );

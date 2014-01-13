@@ -67,11 +67,6 @@ class Kohana_Modeller_Form_Field {
     {
         $label = __(ucwords(Inflector::humanize($this->_column)));
 
-        if ($this->_model instanceof ORM_Modeller_I18n AND $splitted = $this->_model->split_i18n_column($this->_column))
-        {
-            $label = __(ucwords($splitted['column'])).' '.Modeller_I18n::language($splitted['language']);
-        }
-
         return $label;
     }
 

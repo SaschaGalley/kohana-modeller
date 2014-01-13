@@ -8,7 +8,7 @@
 class Kohana_Modeller_Form {
 
     // -------------------------------------------------------------------------
-    //
+
     public static function factory(ORM_Modeller $model)
     {
         return new Modeller_Form($model);
@@ -46,24 +46,6 @@ class Kohana_Modeller_Form {
     public function __toString()
     {
         $view = View::factory($this->_form_view);
-    }
-
-    // -------------------------------------------------------------------------
-
-    /**
-     * Renders a single form field
-     */
-    protected function _render_form_field($column)
-    {
-        $column_type = $this->model()->column_type($column);
-
-        $view = View::factory('modeller/form/fields/'.$column_type);
-
-        $view->name  = $column;
-        $view->value = $this->model()->$column;
-        $view->model = $this->model();
-
-        return $view;
     }
 
     // -------------------------------------------------------------------------
