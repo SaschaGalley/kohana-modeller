@@ -13,6 +13,6 @@
 
     "require": {
         "kohana/core":      ">=3.3",
-        "kohana/orm":       ">=3.3",
+        "kohana/orm":       ">=3.3"
     }
 }
