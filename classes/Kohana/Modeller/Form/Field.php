@@ -79,4 +79,32 @@ class Kohana_Modeller_Form_Field {
 
     // -------------------------------------------------------------------------
 
+    public function max()
+    {
+        $columns = $this->_model->list_columns();
+
+        if (isset($columns[$this->_column]['max']))
+        {
+            return $columns[$this->_column]['max'];
+        }
+
+        return FALSE;
+    }
+
+    // -------------------------------------------------------------------------
+
+    public function maxlength()
+    {
+        $columns = $this->_model->list_columns();
+
+        if (isset($columns[$this->_column]['character_maximum_length']))
+        {
+            return $columns[$this->_column]['character_maximum_length'];
+        }
+
+        return FALSE;
+    }
+
+    // -------------------------------------------------------------------------
+
 }

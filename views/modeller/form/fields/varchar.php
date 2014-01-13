@@ -1,1 +1,1 @@
-<?php echo Form::input($field->name(), $field->value(), $field->attributes()); ?>
+<?php echo Form::input($field->name(), $field->value(), array_merge(array('maxlength' => $field->maxlength()), $field->attributes())); ?>
